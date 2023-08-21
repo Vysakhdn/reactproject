@@ -9,24 +9,102 @@ function MyForm() {
     checkbox:'',
 
   };
-
   const [formData, setFormData] = useState(initialFormData);
 
+  const [savedId, setSavedId] = useState(null);
 
-   const handleChange = (event) => {
-    const { name, value, type, checked } = event.target;
-    const inputValue = type === 'radio' || type === 'checkbox' ? checked : value;
-  
-  setFormData((prevData) => ({
+  const [data, setData] = useState([]);
+
+ 
+  const handleChange = (event) => {
+
+    const {name, value, type, checked } = event.target;
+
+    const inputValue = type === 'checkbox' ? checked : value;
+
+ 
+ setFormData((prevData) => ({
+
       ...prevData,
-      [name]: inputValue,
-    }));
+
+      [name]: inputValue
+
+  }));
+
   };
 
-  const handleSubmit = (event) => {
+ 
+ const handleSubmit = async (event) => {
+
     event.preventDefault();
-    console.log('Form data submitted:', formData);
-    setFormData(initialFormData);
+
+ 
+
+    try {
+
+      const response = await fetch('http://localhost:5500/submit', {
+
+        method: 'POST',
+
+        headers: {
+
+          'Content-Type': 'application/json',
+
+        },
+
+        body: JSON.stringify(formData),
+
+      });
+
+ 
+
+      if (!response.ok) {
+
+        throw new Error('Error saving form data');
+
+      }
+
+      const data = await response.json();
+
+        setSavedId(data.id);
+
+        console.log('Form data submitted:', data);
+
+        setFormData(initialFormData);
+
+    } catch (error) {
+
+      console.error('An error occurred:', error);
+
+    }
+
+  };
+
+ 
+  const handleViewClick = async () => {
+
+ 
+
+    if(savedId) {
+
+    try {
+
+      const response = await fetch(`http://localhost:5500/data?id=${savedId}`);
+
+        const fetchedData = await response.json();
+
+        setData(fetchedData);
+
+        console.log(fetchedData);
+
+     } catch (error) {
+
+      console.error('Error fetching data:', error);
+
+    }
+
+  }
+
   };
   return (
     <div>
@@ -97,11 +175,48 @@ function MyForm() {
           I accept all the terms and conditions.
         </label>
         <br/>
-
         <button type="submit">Submit</button>
+
+        {savedId && <p>Form Data: {savedId}</p>}
+
+        <button onClick={handleViewClick} disabled={!savedId} id="view">View Data</button>
+
+ 
+
+       {data.length > 0 && (
+
+       <div>
+
+        <h2>Fetched Data:</h2>
+
+ 
+
+        <ul>
+
+          {data.map(item => (
+
+            <li key={item.id}>{item.fetchedData}</li>
+
+          ))}
+
+        </ul>
+
+      </div>
+
+    )}
+
       </form>
+
+      <div id="value"></div>
+
+     
+
     </div>
+
+   
+
   );
+
 }
 
 export default MyForm;
